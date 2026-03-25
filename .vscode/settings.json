@@ -1,11 +1,12 @@
 {
-    "cSpell.enabled": true,
-    "C_Cpp.intelliSenseEngine": "disabled",
-    "clangd.path": "./clangd-wrapper.sh",
-    "clangd.checkUpdates": true,
-    "clangd.arguments": ["-log=verbose",
-                         "-pretty",
-                         "--background-index",
-                         "--compile-commands-dir=build"]
-
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "cSpell.enabled": true,
+  "clangd.arguments": [
+    "-log=verbose",
+    "-pretty",
+    "--background-index",
+    "--compile-commands-dir=build"
+  ],
+  "clangd.checkUpdates": true,
+  "clangd.path": "./clangd-wrapper.sh"
 }
