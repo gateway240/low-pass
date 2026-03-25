@@ -2,6 +2,8 @@ clear;
 %% Base Signal (same every time)
 data_dir = "../data"; % Adjust this path as needed
 
+filter_order = 3;
+
 source_dir = fullfile(data_dir,"source");
 results_dir = fullfile(data_dir,"results");
 
@@ -28,7 +30,7 @@ filtered_signals = zeros(length(cutoff_frequencies), length(t));
 for i = 1:length(cutoff_frequencies)
     cutoff = cutoff_frequencies(i);
     normalized_cutoff = cutoff / (sampling_rate / 2);
-    [b, a] = butter(4, normalized_cutoff, 'low');
+    [b, a] = butter(filter_order, normalized_cutoff, 'low');
     % Apply filter
     filtered_signal = filtfilt(b, a, noisy_signal);
     filtered_signals(i, :) = filtered_signal;

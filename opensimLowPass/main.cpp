@@ -95,7 +95,7 @@ int main() {
     std::vector<std::string> labels = {"signal"};
 
     // Create TimeSeriesTable from time and signal
-    OpenSim::TimeSeriesTable table(with_noise_times,data,labels);
+    const OpenSim::TimeSeriesTable table(with_noise_times,data,labels);
     // for (size_t i =0; i < table.getNumRows(); i++) {
     //   std::cout << table.getDependentColumnAtIndex(0) << std::endl;
     // }
@@ -104,11 +104,12 @@ int main() {
     std::vector<int> cutoff_frequencies = {3, 6, 12, 20};
 
     for (int cutoff : cutoff_frequencies) {
+      OpenSim::TimeSeriesTable upd_table{table};
       // Filter the table using OpenSim's filterLowpass
       // const auto& processor = OpenSim::TableProcessor(table) |
       //                         OpenSim::TabOpLowPassFilter(cutoff);
       // processor.process();
-      OpenSim::TableUtilities::filterLowpass(table, cutoff,true);
+      OpenSim::TableUtilities::filterLowpass(upd_table, cutoff,true);
 
       // Extract the filtered signal from the table
       // for (const auto val : table.getIndependentColumn()){
@@ -118,7 +119,7 @@ int main() {
       // Generate file name for saving the results
       std::string filename =
           results_dir + "/opensim_results_" + std::to_string(cutoff) + "_hz.txt";
-      save_filtered_data(filename, with_noise_times, table);
+      save_filtered_data(filename, with_noise_times, upd_table);
 
       std::cout << "Filtered signal for cutoff " << cutoff
                 << " Hz written to: " << filename << std::endl;

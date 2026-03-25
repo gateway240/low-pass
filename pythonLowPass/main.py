@@ -15,6 +15,7 @@ data_dir = Path("../data")
 source_dir = data_dir / "source"
 results_dir = data_dir / "results"
 
+filter_order = 3
 
 def main() -> None:
     # Ensure results directory exists
@@ -49,7 +50,7 @@ def main() -> None:
     for cutoff in cutoff_frequencies:
         normalized_cutoff = cutoff / (sampling_rate / 2)
         # Design filter
-        b, a = butter(4, normalized_cutoff, btype="low")
+        b, a = butter(filter_order, normalized_cutoff, btype="low")
 
         # Apply filter
         filtered_signal = filtfilt(b, a, noisy_signal)
