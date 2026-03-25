@@ -3,9 +3,9 @@
     "C_Cpp.intelliSenseEngine": "disabled",
     "clangd.path": "./clangd-wrapper.sh",
     "clangd.checkUpdates": true,
-    "clangd.arguments": ["-log=verbose", 
-                         "-pretty", 
-                         "--background-index", 
+    "clangd.arguments": ["-log=verbose",
+                         "-pretty",
+                         "--background-index",
                          "--compile-commands-dir=build"]
 
 }
