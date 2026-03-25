@@ -76,8 +76,8 @@ for i, (frequency, result_files) in enumerate(sorted_results):
     ax.set_ylabel("Amplitude")
 
     # Plot the original (no noise) and noisy signal
-    ax.plot(t, signal_no_noise, label="Original Signal", color="black", linestyle=":")
-    ax.plot(t, signal_with_noise, label="Noisy Signal", color="red", linestyle=":")
+    ax.plot(t, signal_no_noise, label="original", color="black", linestyle=":")
+    ax.plot(t, signal_with_noise, label="noisy", color="red", linestyle=":")
 
     # Plot each modality (e.g., MATLAB, Python, others) for the current frequency
     for filename, t, signal in result_files:
@@ -87,7 +87,7 @@ for i, (frequency, result_files) in enumerate(sorted_results):
         # Choose line style based on the file prefix
         line_style = line_styles.get(label, "-")  # Default to solid line if not found
 
-        ax.plot(t, signal, label=label, linestyle=line_style)
+        ax.plot(t, signal, label=label, linestyle=line_style, linewidth=2)
 
     ax.legend()
     ax.grid()
