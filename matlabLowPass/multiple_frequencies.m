@@ -24,7 +24,7 @@ filtered_signals = zeros(length(cutoff_frequencies), length(t));
 for i = 1:length(cutoff_frequencies)
     cutoff = cutoff_frequencies(i);
     normalized_cutoff = cutoff / (sampling_rate / 2);
-    
+
     [b, a] = butter(4, normalized_cutoff, 'low');
     filtered_signals(i, :) = filtfilt(b, a, noisy_signal);
 end
