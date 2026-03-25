@@ -33,9 +33,10 @@ result_files = list(results_dir.glob("*_results_*.txt"))
 
 # Define line styles for each modality
 line_styles = {
-    "matlab": "-",
-    "python": "--",
-    "other": ":",  # Default style for any other modalities
+    "matlab": ("-.", "c"),     # Blue solid line for Matlab
+    "python": ("--", "y"),   # Green dashed line for Python
+    "opensim": ("--", "tab:blue"),    # Red dashed line for OpenSim
+    "other": (":", "black"),     # Black dotted line for other modalities
 }
 # Initialize a dictionary to hold the data for each frequency
 results = {}
@@ -85,9 +86,9 @@ for i, (frequency, result_files) in enumerate(sorted_results):
             0
         ]  # Label based on the prefix (e.g., "matlab", "python", etc.)
         # Choose line style based on the file prefix
-        line_style = line_styles.get(label, "-")  # Default to solid line if not found
+        (line_style, color) = line_styles.get(label, ("-", "black"))  # Default to solid line if not found
 
-        ax.plot(t, signal, label=label, linestyle=line_style, linewidth=2)
+        ax.plot(t, signal, label=label, linestyle=line_style, color=color, linewidth=2)
 
     ax.legend()
     ax.grid()
