@@ -33,9 +33,9 @@ result_files = list(results_dir.glob("*_results_*.txt"))
 
 # Define line styles for each modality
 line_styles = {
-    "matlab": ("-.", "c"),     # Blue solid line for Matlab
+    "matlab": ("-.", "tab:orange"),     # Blue solid line for Matlab
     "python": ("--", "y"),   # Green dashed line for Python
-    "opensim": ("--", "tab:blue"),    # Red dashed line for OpenSim
+    "opensim": (":", "tab:blue"),    # Red dashed line for OpenSim
     "other": (":", "black"),     # Black dotted line for other modalities
 }
 # Initialize a dictionary to hold the data for each frequency
@@ -72,7 +72,7 @@ if num_frequencies == 1:
 
 for i, (frequency, result_files) in enumerate(sorted_results):
     ax = axes[i]
-    ax.set_title(f"Results for {frequency} Hz")
+    ax.set_title(f"Butterworth 3rd Order [{frequency} Hz]")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
 
@@ -89,6 +89,7 @@ for i, (frequency, result_files) in enumerate(sorted_results):
         (line_style, color) = line_styles.get(label, ("-", "black"))  # Default to solid line if not found
 
         ax.plot(t, signal, label=label, linestyle=line_style, color=color, linewidth=2)
+        ax.set_xlim(min(t), max(t))  # Set x-axis to data range
 
     ax.legend()
     ax.grid()
@@ -98,6 +99,6 @@ for i, (frequency, result_files) in enumerate(sorted_results):
 output_file = data_dir / "results_plot.png"  # Define the output file path
 
 plt.tight_layout()
-plt.savefig(output_file, format="png")  # Save as PNG file
+plt.savefig(output_file, format="png", dpi=300)  # Save as PNG file
 
 logger.info("Plot saved to %s", output_file)
