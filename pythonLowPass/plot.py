@@ -8,6 +8,7 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+order = "3rd"
 
 # Define the directory containing the results
 data_dir = Path("../data")
@@ -72,7 +73,7 @@ if num_frequencies == 1:
 
 for i, (frequency, result_files) in enumerate(sorted_results):
     ax = axes[i]
-    ax.set_title(f"Butterworth 3rd Order [{frequency} Hz]")
+    ax.set_title(f"Butterworth {order} Order [{frequency} Hz]")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
 
