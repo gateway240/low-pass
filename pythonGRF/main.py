@@ -155,7 +155,7 @@ def process_data(
     ])
     # cop_raw[~valid, 0:2] = np.nan
     logger.debug("Ref frame: %s", ref_frame)
-    logger.debug("Mean corners: %s", mean_corners)
+    logger.info("Mean corners: %s", mean_corners)
     # @ is matrix multiply in Python
     force = ref_frame @ force_raw.T
     moment = ref_frame @ moment_raw.T
