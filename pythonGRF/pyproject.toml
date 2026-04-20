@@ -22,6 +22,8 @@ ignore = ["COM812"]
 preview = true
 extend-select = [
   "ASYNC", # flake8-async
+  "S",     # flake8-bandit
+  "YTT",   # flake8-2020
   "ANN",   # flake8-annotations
   "BLE",   # flake8-blind-except
   "FBT",   # flake8-boolean-trap

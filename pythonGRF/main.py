@@ -18,6 +18,10 @@ results_dir = data_dir / "results"
 
 filter_order = 3
 
+# 1 based index to match data header
+fp_right = 5
+fp_left = 4
+
 
 # opensim format
 def read_sto_file(
@@ -50,7 +54,7 @@ def find_between(s: str, start: str, end: str) -> str:
     return s[idx1 + len(start) : idx2]
 
 
-def extract_matrix(s: str) -> list[np._ArrayT]:
+def extract_matrix(s: str) -> list[np.ndarray]:
     logger.info(s)
 
     arrays = find_between(s, "{", "}")
@@ -73,6 +77,27 @@ def extract_matrix(s: str) -> list[np._ArrayT]:
     return result
 
 
+def normalize(v: np.ndarray) -> np.ndarray:
+    return v / np.linalg.norm(v)
+
+
+def compute_pf_reference_frame(corners: np.ndarray) -> np.ndarray:
+    axis_x = corners[:, 0] - corners[:, 1]
+    axis_y = corners[:, 0] - corners[:, 3]
+    axis_z = np.cross(axis_x, axis_y)
+    axis_y = np.cross(axis_z, axis_x)
+
+    axis_x = normalize(axis_x)
+    axis_y = normalize(axis_y)
+    axis_z = normalize(axis_z)
+
+    return np.array([axis_x, axis_y, axis_z])
+
+
+def compute_mean_corners(corners: np.ndarray) -> np.ndarray:
+    return corners.mean(1)
+
+
 def main() -> None:
     # Ensure results directory exists
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -85,14 +110,23 @@ def main() -> None:
         msg = "raw corner data not found in header"
         raise ValueError(msg)
     corners = extract_matrix(raw_corners)
-    logger.info("Corners: %s", corners)
+    fp_right_corners = corners[fp_right - 1]
+    logger.info("Corners for FP [%s]:\n %s", fp_right, fp_right_corners)
+    fp_right_mean_corners = compute_mean_corners(fp_right_corners)
+    logger.info("Mean Corners for FP [%s]:\n %s", fp_right, fp_right_mean_corners)
+
+    fp_right_ref_frame = compute_pf_reference_frame(fp_right_corners)
+    logger.info("Reference Frame for FP [%s]:\n %s", fp_right, fp_right_ref_frame)
 
     raw_origins = headers.get("Origins")
     if not raw_origins:
         msg = "raw origin data not found in header"
         raise ValueError(msg)
     origins = extract_matrix(raw_origins)
-    logger.info("Origins %s: ", origins)
+    fp_right_origins = origins[fp_right - 1]
+    logger.info("Origins for FP [%s]:\n %s", fp_right, fp_right_origins)
+
+    # Force place data is extracted. Now process data
 
     logger.info("Filtering complete. Files written to: %s", results_dir)
 
