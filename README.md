@@ -13,7 +13,18 @@ Setup
 cd pythonLowPass
 uv venv
 source .venv/bin/activate
-uv tool install pre-commit --with pre-commit-uv
+uv tool install prek
 uv pip install -r pyproject.toml
 ```
 # Matlab
+
+# COP After Low-pass Filtering
+
+C3dExtract
+```bash
+./main ~/data/kuopio-full-body-dataset/s01_raw/09/mocap/walking.c3d ~/data/low-pass-testing
+```
+
+pythonGRF
+```bash
+```
