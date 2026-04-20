@@ -3,6 +3,7 @@ import logging
 import re
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt
@@ -17,11 +18,16 @@ data_dir = Path("~/data/low-pass-testing").expanduser()
 source_dir = data_dir / "source"
 results_dir = data_dir / "results"
 
-filter_order = 3
+CUTOFF = 6  # Hz
+FILTER_ORDER = 3
+GRF_CUTOFF = 20  # N
 
 # 1 based index to match data header
 fp_right = 5
 fp_left = 4
+
+START = 40
+END = 45
 
 
 # opensim format
@@ -119,54 +125,7 @@ def butter_lowpass_filter(
     return filtered_df
 
 
-def filter_data(data: pd.DataFrame) -> pd.DataFrame:
-    return butter_lowpass_filter(data, cutoff=6, order=4)
-
-
-# Single row processing for reference
-# def process_data(
-#     data: pd.DataFrame,
-#     num: int,
-#     ref_frame: np.ndarray,
-#     mean_corners: np.ndarray,
-#     origin: np.ndarray,
-# ) -> pd.DataFrame:
-#     results = data.copy()
-#     for i, row in results.iterrows():
-#         # if i == 1:
-#         #     logger.info("Data [%d]: %s", i, row)
-#         force_raw = np.array([row[f"f{num}_1"], row[f"f{num}_2"], row[f"f{num}_3"]])
-#         moment_raw = np.array([row[f"m{num}_1"], row[f"m{num}_2"], row[f"m{num}_3"]])
-#         # logger.info("Raw moment: %s", moment_raw)
-#         moment_raw += np.cross(force_raw, origin.flatten())
-#         # logger.info(force_raw[2])
-#         # logger.info("After %s",moment_raw)
-#         cop_raw = np.array([(-moment_raw[1] / force_raw[2]), (moment_raw[0] / force_raw[2]), 0 ])  # noqa: E501
-#         # logger.info(cop_raw)
-#         # logger.info("Ref frame: %s", ref_frame)
-#         # logger.info("Mean corners: %s", mean_corners)
-#         # @ is matrix multiply in Python
-#         force = ref_frame @ force_raw.reshape(-1, 1)
-#         moment = ref_frame @ moment_raw.reshape(-1, 1)
-#         cop = ref_frame @ cop_raw.reshape(-1, 1) + mean_corners.reshape(-1, 1)
-#         # logger.info("Force %s: ", force)
-#         # logger.info("Moment %s: ", moment)
-#         # logger.info("COP %s: ", cop)
-
-#         results.loc[i, f"f{num}_1"] = force[0]
-#         results.loc[i, f"f{num}_2"] = force[1]
-#         results.loc[i, f"f{num}_3"] = force[2]
-
-#         results.loc[i, f"m{num}_1"] = moment[0]
-#         results.loc[i, f"m{num}_2"] = moment[1]
-#         results.loc[i, f"m{num}_3"] = moment[2]
-
-#         results.loc[i, f"p{num}_1"] = cop[0]
-#         results.loc[i, f"p{num}_2"] = cop[1]
-#         results.loc[i, f"p{num}_3"] = cop[2]
-
-
-#     return results
+# Same logic as ezc3d
 def process_data(
     data: pd.DataFrame,
     num: int,
@@ -180,31 +139,70 @@ def process_data(
     #     logger.info("Data [%d]: %s", i, row)
     force_raw = results[[f"f{num}_1", f"f{num}_2", f"f{num}_3"]].to_numpy()
     moment_raw_ = results[[f"m{num}_1", f"m{num}_2", f"m{num}_3"]].to_numpy()
-    # logger.info("Raw moment: %s", moment_raw)
+    logger.debug("Raw moment: %s", moment_raw_)
     moment_raw = moment_raw_ + np.cross(force_raw, origin.flatten())
-    # logger.info(force_raw[2])
     # logger.info("After %s",moment_raw)
     fz = force_raw[:, 2]
+    logger.debug("FZ: %s", -fz)
+
+    # Force is backwards because of the ref frame
+    valid = -fz >= GRF_CUTOFF
+
     cop_raw = np.column_stack([
-        (-moment_raw[:, 1] / fz),
-        (moment_raw[:, 0] / fz),
+        np.where(valid, -moment_raw[:, 1] / fz, 0),
+        np.where(valid, moment_raw[:, 0] / fz, 0),
         np.zeros_like(fz),
     ])
-    # logger.info(cop_raw)
-    # logger.info("Ref frame: %s", ref_frame)
-    # logger.info("Mean corners: %s", mean_corners)
+    # cop_raw[~valid, 0:2] = np.nan
+    logger.debug("Ref frame: %s", ref_frame)
+    logger.debug("Mean corners: %s", mean_corners)
     # @ is matrix multiply in Python
     force = ref_frame @ force_raw.T
     moment = ref_frame @ moment_raw.T
+    # cop = ref_frame @ cop_raw.T + mean_corners.reshape(-1, 1)
     cop = ref_frame @ cop_raw.T + mean_corners.reshape(-1, 1)
-    # logger.info("Force %s: ", force)
-    # logger.info("Moment %s: ", moment)
-    # logger.info("COP %s: ", cop)
+    # cop = ref_frame @ (moment_raw - np.cross(force_raw, (-1 * cop_raw))).T
+    cop = cop.T
+    # This makes it so the invalid values to not plot
+    cop[~valid] = np.nan
+    logger.debug("Force %s: ", force)
+    logger.debug("Moment %s: ", moment)
+    logger.debug("COP %s: ", cop)
 
     results[[f"f{num}_1", f"f{num}_2", f"f{num}_3"]] = force.T
     results[[f"m{num}_1", f"m{num}_2", f"m{num}_3"]] = moment.T
-    results[[f"p{num}_1", f"p{num}_2", f"p{num}_3"]] = cop.T
+    results[[f"p{num}_1", f"p{num}_2", f"p{num}_3"]] = cop
     return results
+
+
+def plot_data(df: pd.DataFrame, num: int, output_path: Path) -> None:
+    logger.info(df.loc[START:END, f"f{num}_1"])
+    logger.info(df.head())
+
+    axes = df.loc[START:END].plot(
+        # axes = df.plot(
+        subplots=True,
+        figsize=(12, 3 * len(df.columns)),
+        legend=False,
+        sharex=True,
+    )
+
+    # Ensure axes is iterable if only one column
+    if len(df.columns) == 1:
+        axes = [axes]
+
+    for ax, col in zip(axes, df.columns, strict=False):
+        ax.set_title(col)  # Set subplot title correctly
+        ax.set_ylabel(col)  # Y-axis label
+        ax.grid(True)  # noqa: FBT003
+
+    axes[-1].set_xlabel("Time")
+
+    plt.tight_layout()
+
+    # Save instead of show
+    plt.savefig(output_path, dpi=100)
+    plt.close()
 
 
 def main() -> None:
@@ -237,7 +235,7 @@ def main() -> None:
 
     # Force place data is extracted. Now process data
     data = data.loc[:, data.columns.str.contains(str(fp_right))]
-    filtered_data = filter_data(data)
+    filtered_data = butter_lowpass_filter(data, cutoff=CUTOFF, order=FILTER_ORDER)
     results = process_data(
         filtered_data,
         fp_right,
@@ -248,7 +246,8 @@ def main() -> None:
     # logger.info(data.head())
     logger.info(filtered_data.head())
     logger.info(results)
-    results.to_csv(results_dir / "test-2.csv")
+    results.to_csv(results_dir / "test-2.csv", na_rep="NaN")
+    plot_data(results, fp_right, results_dir / "grf-output.png")
     logger.info("Filtering complete. Files written to: %s", results_dir)
 
 
