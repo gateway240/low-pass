@@ -164,7 +164,7 @@ def process_data(
     # cop = ref_frame @ (moment_raw - np.cross(force_raw, (-1 * cop_raw))).T
     cop = cop.T
     # This makes it so the invalid values to not plot
-    cop[~valid] = np.nan
+    # cop[~valid] = np.nan
     logger.debug("Force %s: ", force)
     logger.debug("Moment %s: ", moment)
     logger.debug("COP %s: ", cop)
@@ -179,7 +179,19 @@ def plot_data(df: pd.DataFrame, num: int, output_path: Path) -> None:
     logger.info(df.loc[START:END, f"f{num}_1"])
     logger.info(df.head())
 
-    axes = df.loc[START:END].plot(
+    mask = df['f5_3'] >= 20
+
+    # Slice first
+    df_plot = df.loc[START:END].copy()
+
+    # Target only the p columns
+    p_cols = [f"p{num}_1", f"p{num}_2", f"p{num}_3"]
+
+    # Apply mask only to those columns
+    df_plot[p_cols] = df_plot[p_cols].where(mask)
+
+
+    axes = df_plot.plot(
         # axes = df.plot(
         subplots=True,
         figsize=(12, 3 * len(df.columns)),
@@ -191,7 +203,7 @@ def plot_data(df: pd.DataFrame, num: int, output_path: Path) -> None:
     if len(df.columns) == 1:
         axes = [axes]
 
-    for ax, col in zip(axes, df.columns, strict=False):
+    for ax, col in zip(axes, df_plot.columns, strict=False):
         ax.set_title(col)  # Set subplot title correctly
         ax.set_ylabel(col)  # Y-axis label
         ax.grid(True)  # noqa: FBT003
@@ -235,7 +247,8 @@ def main() -> None:
 
     # Force place data is extracted. Now process data
     data = data.loc[:, data.columns.str.contains(str(fp_right))]
-    filtered_data = butter_lowpass_filter(data, cutoff=CUTOFF, order=FILTER_ORDER)
+    # filtered_data = butter_lowpass_filter(data, cutoff=CUTOFF, order=FILTER_ORDER)
+    filtered_data = data
     results = process_data(
         filtered_data,
         fp_right,
@@ -246,8 +259,9 @@ def main() -> None:
     # logger.info(data.head())
     logger.info(filtered_data.head())
     logger.info(results)
+    results = butter_lowpass_filter(results, cutoff=CUTOFF, order=FILTER_ORDER)
     results.to_csv(results_dir / "test-2.csv", na_rep="NaN")
-    plot_data(results, fp_right, results_dir / "grf-output.png")
+    plot_data(results, fp_right, results_dir / "grf-output-low-pass-after-mask.png")
     logger.info("Filtering complete. Files written to: %s", results_dir)
 
 
