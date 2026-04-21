@@ -146,7 +146,8 @@ def process_data(
     logger.debug("FZ: %s", -fz)
 
     # Force is backwards because of the ref frame
-    valid = -fz >= GRF_CUTOFF
+    # valid = -fz >= GRF_CUTOFF
+    valid = True
 
     cop_raw = np.column_stack([
         np.where(valid, -moment_raw[:, 1] / fz, 0),
@@ -164,7 +165,7 @@ def process_data(
     # cop = ref_frame @ (moment_raw - np.cross(force_raw, (-1 * cop_raw))).T
     cop = cop.T
     # This makes it so the invalid values to not plot
-    cop[~valid] = np.nan
+    # cop[~valid] = np.nan
     logger.debug("Force %s: ", force)
     logger.debug("Moment %s: ", moment)
     logger.debug("COP %s: ", cop)
@@ -195,7 +196,13 @@ def plot_data(df: pd.DataFrame, num: int, output_path: Path) -> None:
         ax.set_title(col)  # Set subplot title correctly
         ax.set_ylabel(col)  # Y-axis label
         ax.grid(True)  # noqa: FBT003
-
+        logger.info(col)
+        if "p" in col:
+            if "_1" in col:
+                ax.set_ylim(1475,1600)
+            elif "_2" in col:
+                ax.set_ylim(1500,3000)
+        
     axes[-1].set_xlabel("Time")
 
     plt.tight_layout()
